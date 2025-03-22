@@ -1,16 +1,19 @@
 {
-  "name": "mcpnodit",
+  "name": "mcpnmcp-weather-serviceodit",
   "version": "1.0.0",
-  "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "client": "node client.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.7.0",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
   }
 }
