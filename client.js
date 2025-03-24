@@ -3,7 +3,7 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 
 // Create MCP client
 const client = new McpClient({
-  name: "weather-client",
+  name: "nft-client",
   version: "1.0.0"
 });
 
@@ -18,15 +18,15 @@ async function init() {
     await client.connect(transport);
     console.log("Connected to server successfully!");
 
-    // Example: Get weather data for a city
-    const response = await client.tools.getWeatherDataByCityName.invoke({
-      city: "Mysore"
+    // Get NFT contract data
+    const response = await client.tools.getNFTContractData.invoke({
+      contractAddress: "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D"
     });
-    console.log("Weather data:", response);
+    console.log("NFT Contract data:", JSON.parse(response.content[0].text));
 
   } catch (error) {
     console.error("Error:", error);
   }
 }
 
-init(); 
+init();

@@ -3,6 +3,10 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { z } from "zod";
 import express from "express";
 import cors from "cors";
+import axios from "axios";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -10,30 +14,58 @@ app.use(express.json());
 
 // Create an MCP server
 const server = new McpServer({
-  name: "Weather Data fetch",
+  name: "NFT Contract Data Fetch",
   version: "1.0.0"
 });
 
-async function getWeatherCity(city=''){
-    if(city.toLowerCase()==='mysore'){
-        return {temp:'30c',forecast:'chances of high rain'};
+async function getNFTContractData(contractAddress) {
+    try {
+        const response = await axios.post(
+            'https://web3.nodit.io/v1/ethereum/mainnet/nft/getNftContractMetadataByContracts',
+            {
+                contractAddresses: [contractAddress]
+            },
+            {
+                headers: {
+                    'X-API-KEY': process.env.API_KEY,
+                    'accept': 'application/json',
+                    'content-type': 'application/json'
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching NFT data:', error);
+        return { error: 'Unable to fetch NFT data' };
     }
-    if(city.toLowerCase()==='bangalore'){
-      return {temp:'10c',forecast:'chances of high rain and wind'};
-    } 
-    return {temp:'null',forecast:'unable to fetch '};
 }
 
-// Add weather data tool
-server.tool("getWeatherDataByCityName",
- { city : z.string() }, 
-  async ({ city }) => {
-    const weatherData = await getWeatherCity(city);
-    return { content: [{ type: "text", text: JSON.stringify(weatherData) }] };
+// Add NFT data tool
+server.tool("getNFTContractData",
+ { contractAddress: z.string() }, 
+  async ({ contractAddress }) => {
+    const nftData = await getNFTContractData(contractAddress);
+    return { content: [{ type: "text", text: JSON.stringify(nftData) }] };
   }
 );
 
 let connections = new Set();
+
+// Add API endpoint for direct testing
+app.post('/api', async (req, res) => {
+  const { type, id, tool, params = {} } = req.body;
+  
+  if (tool === "getNFTContractData") {
+    const nftData = await getNFTContractData(params.contractAddress);
+    return res.json({
+      type: "response",
+      id,
+      result: { content: [{ type: "text", text: JSON.stringify(nftData) }] }
+    });
+  }
+  
+  res.status(400).json({ error: "Invalid tool" });
+});
 
 // SSE endpoint
 app.get("/sse", (req, res) => {
@@ -90,12 +122,12 @@ app.post("/messages", express.json(), async (req, res) => {
     }
 
     // Process the request directly
-    if (tool === "getWeatherDataByCityName") {
-      const weatherData = await getWeatherCity(params.city);
+    if (tool === "getNFTContractData") {
+      const nftData = await getNFTContractData(params.contractAddress);
       return res.json({
         type: "response",
         id,
-        result: { content: [{ type: "text", text: JSON.stringify(weatherData) }] }
+        result: { content: [{ type: "text", text: JSON.stringify(nftData) }] }
       });
     }
 
